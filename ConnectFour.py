@@ -9,6 +9,11 @@ import numpy as np
 # Local libs
 from Player import AIPlayer, RandomPlayer, HumanPlayer
 
+#https://stackoverflow.com/a/37737985
+def turn_worker(board, send_end, p_func):
+    send_end.send(p_func(board))
+
+
 class Game:
     def __init__(self, player1, player2, time):
         self.players = [player1, player2]
@@ -41,19 +46,15 @@ class Game:
         if not self.game_over:
             current_player = self.players[self.current_turn]
 
-            #https://stackoverflow.com/a/37737985
-            def turn_worker(board, send_end):
-                if self.players[int(not self.current_turn)].type == 'human':
-                    p_func = current_player.get_alpha_beta_move
-                else:
-                    p_func = current_player.get_expectimax_move
-
-                send_end.send(p_func(board))
+            if self.players[int(not self.current_turn)].type == 'random':
+                p_func = current_player.get_expectimax_move
+            else:
+                p_func = current_player.get_alpha_beta_move
 
             if current_player.type == 'ai':
                 try:
                     recv_end, send_end = mp.Pipe(False)
-                    p = mp.Process(target=turn_worker, args=(self.board, send_end))
+                    p = mp.Process(target=turn_worker, args=(self.board, send_end, p_func))
                     p.start()
                     p.join(self.ai_turn_limit)
                 except Exception as e:
