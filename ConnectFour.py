@@ -46,12 +46,13 @@ class Game:
         if not self.game_over:
             current_player = self.players[self.current_turn]
 
-            if self.players[int(not self.current_turn)].type == 'random':
-                p_func = current_player.get_expectimax_move
-            else:
-                p_func = current_player.get_alpha_beta_move
-
             if current_player.type == 'ai':
+                
+                if self.players[int(not self.current_turn)].type == 'random':
+                    p_func = current_player.get_expectimax_move
+                else:
+                    p_func = current_player.get_alpha_beta_move
+                
                 try:
                     recv_end, send_end = mp.Pipe(False)
                     p = mp.Process(target=turn_worker, args=(self.board, send_end, p_func))
@@ -77,8 +78,6 @@ class Game:
             else:
                 self.current_turn = int(not self.current_turn)
                 self.player_string.configure(text=self.players[self.current_turn].player_string)
-                if self.players[self.current_turn].type == 'human':
-                    self.make_move()
 
     def update_board(self, move, player_num):
         if 0 in self.board[:,move]:
