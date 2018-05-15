@@ -100,7 +100,7 @@ class Game:
 
 
     def game_completed(self, player_num):
-        player_win_str = '{}{}{}{}'.format(player_num, player_num, player_num, player_num)
+        player_win_str = '{0}{0}{0}{0}'.format(player_num)
         board = self.board
         to_str = lambda a: ''.join(a.astype(str))
 
@@ -116,13 +116,18 @@ class Game:
         def check_diagonal(b):
             for op in [None, np.fliplr]:
                 op_board = op(b) if op else b
-
-                if player_win_str in to_str(np.diagonal(op_board, offset=0)):
+                
+                root_diag = np.diagonal(op_board, offset=0).astype(np.int)
+                if player_win_str in to_str(root_diag):
                     return True
 
                 for i in range(1, b.shape[1]-3):
-                    if player_win_str in to_str(np.diagonal(op_board, offset=i)):
-                        return True
+                    for offset in [i, -i]:
+                        diag = np.diagonal(op_board, offset=offset)
+                        diag = to_str(diag.astype(np.int))
+                        if player_win_str in diag:
+                            return True
+
             return False
 
         return (check_horizontal(board) or
