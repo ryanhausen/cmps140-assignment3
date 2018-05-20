@@ -57,11 +57,14 @@ class Game:
                     recv_end, send_end = mp.Pipe(False)
                     p = mp.Process(target=turn_worker, args=(self.board, send_end, p_func))
                     p.start()
-                    p.join(self.ai_turn_limit)
+                    if p.join(self.ai_turn_limit) is None and p.is_alive():
+                        p.terminate()
+                        raise Exception('Player Exceeded time limit')
                 except Exception as e:
                     uh_oh = 'Uh oh.... something is wrong with Player {}'
                     print(uh_oh.format(current_player.player_number))
-                    print(e.with_traceback())
+                    print(e)
+                    raise Exception('Game Over')
 
                 move = recv_end.recv()
             else:
@@ -69,8 +72,6 @@ class Game:
 
             if move is not None:
                 self.update_board(int(move), current_player.player_number)
-            else:
-                raise Exception('Player exceeded time limit')
 
             if self.game_completed(current_player.player_number):
                 self.game_over = True
