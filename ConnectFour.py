@@ -15,6 +15,10 @@ def turn_worker(board, send_end, p_func):
 
 
 class Game:
+"""Sets up and manages a game of Connect 4 including turns and graphics.
+
+    Each turn is executed in a mp.Process to keep the main ui thread available
+"""
     def __init__(self, player1, player2, time):
         self.players = [player1, player2]
         self.colors = ['yellow', 'red']
@@ -24,6 +28,7 @@ class Game:
         self.game_over = False
         self.ai_turn_limit = time
 
+        # very SIMPLE gui built here
         #https://stackoverflow.com/a/38159672
         root = tk.Tk()
         root.title('Connect 4')
@@ -43,16 +48,17 @@ class Game:
         root.mainloop()
 
     def make_move(self):
+        """Moves the game forward a single move."""
         if not self.game_over:
             current_player = self.players[self.current_turn]
 
             if current_player.type == 'ai':
-                
+
                 if self.players[int(not self.current_turn)].type == 'random':
                     p_func = current_player.get_expectimax_move
                 else:
                     p_func = current_player.get_alpha_beta_move
-                
+
                 try:
                     recv_end, send_end = mp.Pipe(False)
                     p = mp.Process(target=turn_worker, args=(self.board, send_end, p_func))
@@ -81,6 +87,7 @@ class Game:
                 self.player_string.configure(text=self.players[self.current_turn].player_string)
 
     def update_board(self, move, player_num):
+        """Updates the board UI to reflect player_num's move at column move"""
         if 0 in self.board[:,move]:
             update_row = -1
             for row in range(1, self.board.shape[0]):
@@ -101,6 +108,7 @@ class Game:
 
 
     def game_completed(self, player_num):
+        """Returns True if player_num is in a winning position on the gameboard"""
         player_win_str = '{0}{0}{0}{0}'.format(player_num)
         board = self.board
         to_str = lambda a: ''.join(a.astype(str))
@@ -117,7 +125,7 @@ class Game:
         def check_diagonal(b):
             for op in [None, np.fliplr]:
                 op_board = op(b) if op else b
-                
+
                 root_diag = np.diagonal(op_board, offset=0).astype(np.int)
                 if player_win_str in to_str(root_diag):
                     return True
@@ -157,21 +165,7 @@ def main(player1, player2, time):
     Game(make_player(player1, 1), make_player(player2, 2), time)
 
 
-def play_game(player1, player2):
-    """
-    Creates a new game GUI and plays a game using the two players passed in.
-
-    INPUTS:
-    - player1 an object of type AIPlayer, RandomPlayer, or HumanPlayer
-    - player2 an object of type AIPlayer, RandomPlayer, or HumanPlayer
-
-    RETURNS:
-    None
-    """
-    board = np.zeros([6,7])
-
-
-
+# entrance point parses arguments from cli
 if __name__=='__main__':
     player_types = ['ai', 'random', 'human']
     parser = argparse.ArgumentParser()
